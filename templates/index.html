@@ -1,0 +1,642 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YOLO 实时视频检测系统</title>
+    <style>
+        :root {
+            --primary: #2563eb;    /* 主色调：科技蓝 */
+            --light-bg: #ffffff;   /* 白色背景 */
+            --card-bg: #f8fafc;    /* 卡片背景：浅灰 */
+            --text-dark: #1e293b;  /* 深色文字 */
+            --text-gray: #64748b;  /* 灰色文字：次要信息 */
+            --border-radius: 8px;  /* 统一圆角：现代感 */
+            --shadow: 0 4px 12px rgba(0,0,0,0.1); /* 阴影：分层 */
+            --ai-user: #dbeafe;    /* 用户消息背景：浅蓝 */
+            --ai-user-text: #1e40af; /* 用户消息文字 */
+            --ai-assistant: #f1f5f9; /* AI消息背景：浅灰 */
+            --ai-assistant-text: #1e293b; /* AI消息文字 */
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--light-bg); /* 白色背景 */
+            color: var(--text-dark);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        /* 标题区域 */
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+            width: 100%;
+            max-width: 1400px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: var(--text-dark);
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .header h1::before {
+            content: "📹";
+            font-size: 1.5rem;
+        }
+
+        .header p {
+            color: var(--text-gray);
+            font-size: 0.95rem;
+        }
+
+        /* 核心容器：左右分栏布局 */
+        .main-container {
+            width: 100%;
+            max-width: 1400px;
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+
+        /* 左侧视频区域（占70%宽度） */
+        .video-section {
+            flex: 0 0 70%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* 右侧对话框区域（占30%宽度） */
+        .dialog-section {
+            flex: 0 0 30%;
+            position: sticky;
+            top: 20px;
+            max-height: calc(100vh - 40px);
+        }
+
+        /* 视频卡片 */
+        .video-card {
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            position: relative;
+            width: 100%;
+            border: 1px solid #e2e8f0;
+            max-height: 500px;
+        }
+
+        /* 视频加载中状态 */
+        .video-loading {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--light-bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            gap: 12px;
+        }
+
+        .video-loading .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e2e8f0;
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .video-card img {
+            width: 100%;
+            height: 100%;
+            display: block;
+            aspect-ratio: 16 / 9;
+            object-fit: contain;
+        }
+
+        /* 状态监控卡片 */
+        .status-card {
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 16px 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: space-between;
+            border: 1px solid #e2e8f0;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-icon {
+            width: 32px;
+            height: 32px;
+            background-color: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+        }
+
+        .status-info h3 {
+            font-size: 0.9rem;
+            color: var(--text-gray);
+        }
+
+        .status-info .value {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        /* 操作提示区域 */
+        .instructions {
+            margin-top: 20px;
+            text-align: center;
+            color: var(--text-gray);
+            font-size: 0.9rem;
+            max-width: 800px;
+        }
+
+        .instructions strong {
+            color: var(--primary);
+        }
+
+        /* --------------- AI对话框样式 --------------- */
+        /* 对话框主体 */
+        .ai-dialog {
+            height: 600px; /* 固定高度，替代 min-height */
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* 防止整体溢出 */
+        }
+
+        /* 对话框标题栏 */
+        .ai-dialog-header {
+            padding: 12px 16px;
+            background-color: var(--primary);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+        }
+
+        /* 关闭按钮 */
+        .ai-close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 4px;
+            line-height: 1;
+        }
+
+        /* 消息列表区域 */
+        .ai-messages {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            min-height: 0;
+            /* 预留滚动条空间 */
+            padding: 16px 12px 16px 16px;
+            z-index: 1; /* 确保在顶层，可交互 */
+        }
+
+        /* 滚动条美化 */
+        .ai-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .ai-messages::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 3px;
+        }
+
+        .ai-messages::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+
+        /* 用户消息样式 */
+        .ai-message-user {
+            align-self: flex-end;
+            background-color: var(--ai-user);
+            color: var(--ai-user-text);
+            padding: 8px 12px;
+            border-radius: var(--border-radius) var(--border-radius) 0 var(--border-radius);
+            max-width: 90%;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+
+        /* AI消息样式 */
+        .ai-message-assistant {
+            align-self: flex-start;
+            background-color: var(--ai-assistant);
+            color: var(--ai-assistant-text);
+            padding: 8px 12px;
+            border-radius: var(--border-radius) var(--border-radius) var(--border-radius) 0;
+            max-width: 90%;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+
+        /* 紧急警报消息样式 */
+        .ai-message-assistant.alert {
+            background-color: #fee2e2;
+            border-left: 4px solid #ef4444;
+            color: #b91c1c;
+        }
+
+        /* AI加载状态 */
+        .ai-loading {
+            align-self: flex-start;
+            display: flex;
+            gap: 4px;
+            padding: 8px 12px;
+        }
+
+        .ai-loading .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #e2e8f0;
+            border-top: 2px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        /* 输入区域 */
+        .ai-input-container {
+            padding: 12px 16px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            gap: 8px;
+        }
+
+        .ai-input {
+            flex: 1;
+            background-color: white;
+            border: 1px solid #cbd5e1;
+            border-radius: var(--border-radius);
+            padding: 8px 12px;
+            color: var(--text-dark);
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .ai-input:focus {
+            border-color: var(--primary);
+        }
+
+        .ai-send-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            padding: 8px 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .ai-send-btn:hover {
+            background-color: #1d4ed8;
+        }
+
+        /* --------------- 响应式适配 --------------- */
+        @media (max-width: 1024px) {
+            .main-container {
+                flex-direction: column;
+            }
+            .video-section, .dialog-section {
+                flex: 0 0 100%;
+            }
+            .dialog-section {
+                position: static;
+                max-height: 500px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .status-card {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 16px;
+            }
+
+            .status-item {
+                width: 100%;
+                justify-content: space-between;
+            }
+        }
+    </style>
+    <!-- 实时更新状态逻辑 -->
+    <script>
+        // 模拟从后端获取实时数据
+        function updateStatus() {
+            fetch("/get_data",{
+                method: 'GET',
+            })
+                .then(response => {
+                if (!response.ok){
+                    throw new Error('网络响应错误');
+                }
+                return response.json()
+            })
+                .then(data => {
+                    console.log("从服务器收到的数据:", data);
+
+                    // 检测目标数更新
+                    const detElement = document.getElementById('detection-value');
+                    detElement.textContent = data.number_frame;
+
+                    // 连接状态更新
+                    const connElement = document.getElementById('conn-value');
+                    connElement.textContent = data.status;
+                    if (data.status === "连接正常"){
+                        connElement.style.color = '#16a34a';
+                    }
+                    else {
+                        connElement.style.color = '#dc2626'
+                    }
+                })
+
+            setTimeout(updateStatus, 1000);
+        }
+
+        // DOM加载完成后初始化视频和状态更新
+        document.addEventListener('DOMContentLoaded', function() {
+            const videoImg = document.querySelector('.video-card img');
+            const loadingScreen = document.querySelector('.video-loading');
+            let checkTimer;
+
+            // 视频加载成功后隐藏loading
+            checkTimer = setInterval(function() {
+                if (videoImg.naturalWidth > 0) {
+                    loadingScreen.style.display = 'none';
+                    clearInterval(checkTimer);
+                    console.log('视频流已成功渲染，自动隐藏加载动画');
+                }
+            }, 500);
+
+            // 启动状态更新
+            updateStatus();
+        });
+    </script>
+    <!-- 位置输入窗口 -->
+     <style>
+      /* 位置管理窗口：流式布局，嵌入页面内容 */
+        .location-container {
+            background-color: var(--card-bg); /* 与视频卡片、状态卡片背景一致 */
+            border-radius: var(--border-radius); /* 统一圆角 */
+            box-shadow: var(--shadow); /* 统一阴影 */
+            padding:  12px 16px;
+            border: 1px solid #e2e8f0; /* 统一边框 */
+            width: 100%; /* 宽度与视频卡片、状态卡片一致 */
+            margin-bottom: 12px; /* 与下方状态卡片保持间距 */
+            height: 200px;
+        }
+
+        /* 位置窗口标题 */
+        .location-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0 0 12px 0;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .location-title::before {
+            content: "📍"; /* 位置图标，增强视觉识别 */
+            font-size: 1.1rem;
+        }
+
+        /* 输入框样式：与页面其他输入框（AI对话框）统一 */
+        #locationInput {
+            width: 100%;
+            padding: 8px 12px;
+            font-size: 14px;
+            border: 1px solid #333333;
+            border-radius: var(--border-radius); /* 统一圆角 */
+            box-sizing: border-box;
+            margin-bottom: 12px;
+            outline: none;
+            transition: all 0.3s;
+            background-color: #f5f5f5; /* 默认浅灰背景 */
+            color: #000000; /* 黑色文字 */
+        }
+        #locationInput:focus {
+            background-color: #e9e9e9;
+            border-color: #666666; /* 聚焦时用页面主色调 */
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1); /* 轻微发光，与AI输入框一致 */
+        }
+
+        /* 历史记录列表：融入位置窗口，不超出边界 */
+        .history-list {
+            width: 100%;
+            max-height: 150px; /* 最大高度，超出滚动 */
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: var(--border-radius);
+            background: #fff;
+            margin: 0 0 12px 0;
+            padding: 0;
+            list-style: none;
+            display: none; /* 默认隐藏 */
+            box-sizing: border-box;
+        }
+        .history-list li {
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--text-dark);
+        }
+        .history-list li:hover {
+            background-color: var(--light-bg); /* hover 效果，与AI消息列表一致 */
+        }
+
+        /* 按钮组：与状态卡片布局风格统一 */
+        .location-btn-group {
+            display: flex;
+            gap: 12px; /* 按钮间距，优化视觉 */
+        }
+        #submitBtn, #clearBtn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+        #submitBtn {
+            flex: 1; /* 提交按钮占主要宽度 */
+            background-color: var(--primary); /* 主色调，强调主要操作 */
+            color: #fff;
+        }
+        #submitBtn:hover {
+            background-color: #1d4ed8; /* 主色调加深，统一交互反馈 */
+        }
+        #clearBtn {
+            background-color: var(--light-bg); /* 浅色背景，次要操作 */
+            color: var(--text-gray);
+        }
+        #clearBtn:hover {
+            background-color: #e2e8f0;
+        }
+    </style>
+
+</head>
+<body>
+    <!-- 标题区域 -->
+    <div class="header">
+        <div>
+            <h1>YOLO 实时视频检测系统</h1>
+            <p>基于YOLO模型的实时目标检测 | 支持RTSP流输入</p>
+        </div>
+    </div>
+    <!-- 核心内容容器（左右分栏） -->
+    <div class="main-container">
+        <!-- 左侧：视频区域 -->
+        <div class="video-section">
+            <!-- 左侧：位置输入窗口 -->
+            <div class="location-container">
+                <h3 class="location-title">位置管理</h3>
+                <div class="current-location" style="margin-bottom: 12px; padding: 8px; background-color: #f1f5f9; border-radius: var(--border-radius);">
+                    <span style="font-size: 14px; color: var(--text-gray);">当前位置：</span>
+                    <span id="currentLocationDisplay" style="font-size: 14px; color: var(--text-dark);">未设置</span>
+                </div>
+                <label for="locationInput"></label>
+                <input type="text" id="locationInput" onclick = placeholder="请输入监控位置（如：3楼走廊、急诊室）">
+                <ul class="history-list" id="historyList"></ul>
+                    <div class="location-btn-group">
+                        <button id="submitBtn" onclick=sendPosition()>确认提交</button>
+                        <button id="clearBtn">清空记录</button>
+                    </div>
+            </div>
+            <!-- 视频卡片 -->
+            <div class="video-card">
+                <div class="video-loading">
+                    <div class="spinner"></div>
+                    <p>正在连接视频流...</p>
+                </div>
+
+                <img
+                    src="{{ url_for('video_feed') }}"
+                    alt="YOLO实时检测画面"
+{#                    onError="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMjI1IiBmaWxsPSJ3aGl0ZSI+PGcgZmlsbD0iI2UyZThlMCI+PHBhdGggZD0iTTM1MCAxNzVINTAiLz48cGF0aCBkPSJNMzUwIDU1SDUwIi8+PHBhdGggZD0iTTI1MCAxNzVWMTAwIiBzdHJva2U9IiM2NDc0OGIiIHN0cm9rZS13aWR0aD0iMTUiLz48L2c+PC9zdmc+';"#}
+                >
+            </div>
+
+            <!-- 状态监控卡片 -->
+            <div class="status-card">
+                <div class="status-item">
+                    <div class="status-icon">📊</div>
+                    <div class="status-info">
+                        <h3>当前帧率</h3>
+                        <div class="value" id="fps-value">-- FPS</div>
+                    </div>
+                </div>
+                <div class="status-item">
+                    <div class="status-icon">🔍</div>
+                    <div class="status-info">
+                        <h3>检测目标</h3>
+                        <div class="value" id="detection-value">--</div>
+                    </div>
+                </div>
+                <div class="status-item">
+                    <div class="status-icon">🔌</div>
+                    <div class="status-info">
+                        <h3>连接状态</h3>
+                        <div class="value" id="conn-value">连接中...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧：AI对话框区域 -->
+        <div class="dialog-section">
+            <div class="ai-dialog" id="aiDialog">
+                <div class="ai-dialog-header">
+                    <span>YOLO检测AI助手</span>
+                    <button class="ai-close-btn" id="aiCloseBtn">&times;</button>
+                </div>
+                <div class="ai-messages" id="aiMessages"></div>
+                <div class="ai-input-container">
+                    <label for="aiInput"></label>
+                    <input type="text" class="ai-input" id="aiInput" placeholder="输入问题，如'支持哪些目标检测'...">
+                    <button class="ai-send-btn" id="aiSendBtn">发送</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 操作提示 -->
+    <div class="instructions">
+    <p style="font-family:'Segoe UI',sans-serif;
+    font-size:24px; font-weight:600; color:#2c3e50;
+    letter-spacing:1px; text-shadow:0 1px 2px rgba(0,0,0,0.1);
+    padding-bottom:8px; border-bottom:2px solid #3498db;
+    display:inline-block;">安全检测系统</p>
+
+        <p style="margin-top: 8px;">青盾护卫</p>
+    </div>
+    <!-- 引入JS脚本 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script src="{{ url_for('static', filename='aiDialog.js') }}"></script>
+    <script src="{{ url_for('static', filename='frame.js') }}"></script>
+    <script src="{{ url_for('static', filename='position_send.js') }}"></script>
+
+
+</body>
+</html>
