@@ -1,0 +1,17 @@
+camera_id,ip,location,description,installed
+cam_001,rtsp://10.0.0.5/stream,Building A - Floor 2 - Staircase,Staircase camera #1,2025-10-01
+cam_002,rtsp://10.0.0.6/stream,Building A - Floor 1 - Lobby,Lobby camera #1,2025-09-20
+cam_003,rtsp://10.0.0.7/stream,Building B - Floor 3 - Classroom,Classroom #1,2025-10-10
+cam_004,rtsp://10.0.0.8/stream,Building B - Floor 2 - Bathroom,Bathroom #1,2025-10-11
+cam_005,rtsp://10.0.0.9/stream,Building B - Floor 3 - Dining Hall,Dining Hall #2,2025-09-10
+cam_006,rtsp://10.0.1.0/stream,Building B - Floor 3 - Library,Library #1,2024-10-10
+cam_007,rtsp://10.0.1.1/stream,Building C - Floor 4 - Classroom,Classroom #2,2024-10-10
+cam_008,rtsp://10.0.1.2/stream,Building B - Floor 3 - Dormitory,Dormitory #3,2025-10-10
+cam_009,rtsp://10.0.1.3/stream,Building B - Floor 2 - Teaching Building,Teaching Building #1,2024-10-10
+cam_010,rtsp://10.0.1.4/stream,Building B - Floor 3 - Classroom,Classroom #6,2025-10-10
+cam_011,rtsp://10.0.1.5/stream,Building B - Floor 1 - Classroom,Classroom #1,2025-10-10
+cam_012,rtsp://10.0.1.6/stream,Building B - Floor 2 - Playground,Playground #9,2025-10-14
+cam_013,rtsp://10.0.1.7/stream,Building D - Floor 3 - Restroom,Restroom #8,2023-10-11
+cam_014,rtsp://10.0.1.8/stream,Building B - Floor 5 - Classroom,Classroom #5,2025-10-12
+cam_015,rtsp://10.0.1.9/stream,Building B - Floor 3 - Washroom,Washroom #7,2024-10-20
+cam_016,rtsp://10.0.2.0/stream,Building B - Floor 3 - Classroom,Classroom #1,2024-10-10

@@ -1,0 +1,90 @@
+# ================================
+# CampusSafetyAI-BlueShield .gitignore
+# 仅上传代码、文本、配置与文档
+# ================================
+
+# --- Python 缓存与虚拟环境 ---
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.env/
+.venv/
+venv/
+env/
+build/
+dist/
+*.egg-info/
+
+# --- 临时日志、测试、系统文件 ---
+*.tmp
+*.bak
+*.swp
+*.DS_Store
+Thumbs.db
+
+# --- 模型文件（大文件不上传） ---
+*.pt
+*.pth
+*.onnx
+*.bin
+*.ckpt
+*.tflite
+*.weights
+
+# --- 图像与视频数据 ---
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.bmp
+*.tif
+*.tiff
+*.webp
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.flv
+
+# --- 压缩与数据包 ---
+*.zip
+*.rar
+*.7z
+*.tar
+*.gz
+
+# --- 项目中可能出现的大文件目录 ---
+dataset/
+datasets/
+data/
+images/
+videos/
+outputs/
+runs/
+results/
+__results__/
+checkpoints/
+models/
+fall_dataset
+fall_dataset2
+fall_dataset_train_1st
+fall_dataset_train_2nd
+fall_dataset_train_3rd
+DS_tuning/deepseek-lora-finetuned
+
+# --- IDE 文件 ---
+.vscode/
+.idea/
+*.iml
+
+
+# --- 允许上传的文件类型 ---
+!*.py
+!*.jsonl
+!*.yaml
+!*.yml
+!*.txt
+!*.md
+!*.docx
+!*.pdf

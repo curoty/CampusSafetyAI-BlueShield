@@ -1,0 +1,7 @@
+detection_id,timestamp,label,confidence,frame_id,camera_id
+det_cam001_0001,2025-10-23T22:00:12Z,Fall Detected,0.93,3456,cam_001
+det_cam001_0002,2025-10-23T22:00:14Z,Fall Detected,0.9,3458,cam_001
+det_cam001_0003,2025-10-23T22:00:20Z,Normal,0.88,3464,cam_001
+det_cam002_0001,2025-10-24T09:15:05Z,Resting,0.85,1001,cam_002
+det_cam002_0002,2025-10-24T09:15:10Z,Fall Detected,0.88,1004,cam_002
+det_cam002_0003,2025-10-24T09:15:20Z,Fall Detected,0.91,1008,cam_002
